@@ -3,12 +3,12 @@
 import { useState, useCallback } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  Camera, 
-  Upload, 
-  FileText, 
-  X, 
-  Check, 
+import {
+  Camera,
+  Upload,
+  FileText,
+  X,
+  Check,
   Loader2,
   Image as ImageIcon,
   Sparkles,
@@ -33,18 +33,18 @@ export default function DocumentUpload({ onComplete, onCancel }: DocumentUploadP
   const [documentType, setDocumentType] = useState<DocumentType>('lab_report');
   const [processingStep, setProcessingStep] = useState(0);
   const [processedDocument, setProcessedDocument] = useState<MedicalDocument | null>(null);
-  
+
   const { setProcessing, addAlerts } = useMedLensStore();
-  
+
   const processingSteps = [
     { label: 'Analyzing document', icon: '🔍' },
     { label: 'Extracting medical data', icon: '📊' },
     { label: 'Understanding context', icon: '🧠' },
     { label: 'Generating insights', icon: '✨' },
   ];
-  
-  const isRealAPI = process.env.NEXT_PUBLIC_USE_REAL_API === 'true';
-  
+
+
+
   const onDrop = useCallback((acceptedFiles: File[]) => {
     const file = acceptedFiles[0];
     if (file) {
@@ -57,7 +57,7 @@ export default function DocumentUpload({ onComplete, onCancel }: DocumentUploadP
       reader.readAsDataURL(file);
     }
   }, []);
-  
+
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
     accept: {
@@ -67,27 +67,27 @@ export default function DocumentUpload({ onComplete, onCancel }: DocumentUploadP
     maxFiles: 1,
     maxSize: 10 * 1024 * 1024, // 10MB
   });
-  
+
   const processDocument = async () => {
     if (!selectedImage) return;
-    
+
     setStep('processing');
     setProcessing(true);
-    
+
     // Simulate processing steps with delays
     for (let i = 0; i < processingSteps.length; i++) {
       setProcessingStep(i);
       await new Promise(resolve => setTimeout(resolve, 800 + Math.random() * 400));
     }
-    
+
     try {
       // Extract document data using MedGemma
-      const { extractedData, documentType: detectedType, title, date, provider, facility } = 
+      const { extractedData, documentType: detectedType, title, date, provider, facility } =
         await extractDocumentData(selectedImage, documentType);
-      
+
       // Generate explanation
       const explanation = await generateExplanation(extractedData);
-      
+
       // Create document object
       const doc: MedicalDocument = {
         id: uuidv4(),
@@ -103,13 +103,13 @@ export default function DocumentUpload({ onComplete, onCancel }: DocumentUploadP
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       };
-      
+
       // Generate and store alerts
       const alerts = generateAlerts(doc);
       if (alerts.length > 0) {
         addAlerts(alerts);
       }
-      
+
       setProcessedDocument(doc);
       setStep('complete');
     } catch (error) {
@@ -119,7 +119,7 @@ export default function DocumentUpload({ onComplete, onCancel }: DocumentUploadP
       setProcessing(false);
     }
   };
-  
+
   const documentTypes: { type: DocumentType; label: string; icon: string }[] = [
     { type: 'lab_report', label: 'Lab Results', icon: '🔬' },
     { type: 'imaging', label: 'Imaging', icon: '📷' },
@@ -153,7 +153,7 @@ export default function DocumentUpload({ onComplete, onCancel }: DocumentUploadP
           <X className="w-5 h-5 text-midnight-500" />
         </button>
       </div>
-      
+
       <AnimatePresence mode="wait">
         {/* Step 1: Select/Upload */}
         {step === 'select' && (
@@ -168,8 +168,8 @@ export default function DocumentUpload({ onComplete, onCancel }: DocumentUploadP
               {...getRootProps()}
               className={`
                 card cursor-pointer border-2 border-dashed transition-all duration-200
-                ${isDragActive 
-                  ? 'border-sage-400 bg-sage-50' 
+                ${isDragActive
+                  ? 'border-sage-400 bg-sage-50'
                   : 'border-cream-300 hover:border-sage-300 hover:bg-cream-50'
                 }
               `}
@@ -187,7 +187,7 @@ export default function DocumentUpload({ onComplete, onCancel }: DocumentUploadP
                 </p>
               </div>
             </div>
-            
+
             {/* Camera option for mobile */}
             <div className="mt-4 flex gap-3">
               <label className="flex-1 cursor-pointer">
@@ -209,7 +209,7 @@ export default function DocumentUpload({ onComplete, onCancel }: DocumentUploadP
                 </div>
               </label>
             </div>
-            
+
             {/* Tips */}
             <div className="mt-8 p-4 rounded-2xl bg-sage-50 border border-sage-100">
               <h4 className="font-medium text-sage-800 mb-2 flex items-center gap-2">
@@ -225,7 +225,7 @@ export default function DocumentUpload({ onComplete, onCancel }: DocumentUploadP
             </div>
           </motion.div>
         )}
-        
+
         {/* Step 2: Preview */}
         {step === 'preview' && selectedImage && (
           <motion.div
@@ -244,7 +244,7 @@ export default function DocumentUpload({ onComplete, onCancel }: DocumentUploadP
                 />
               </div>
             </div>
-            
+
             {/* Document Type Selection */}
             <div className="mb-6">
               <label className="block text-sm font-medium text-midnight-700 mb-3">
@@ -264,16 +264,15 @@ export default function DocumentUpload({ onComplete, onCancel }: DocumentUploadP
                     `}
                   >
                     <span className="text-xl mb-1 block">{icon}</span>
-                    <span className={`text-sm font-medium ${
-                      documentType === type ? 'text-sage-700' : 'text-midnight-700'
-                    }`}>
+                    <span className={`text-sm font-medium ${documentType === type ? 'text-sage-700' : 'text-midnight-700'
+                      }`}>
                       {label}
                     </span>
                   </button>
                 ))}
               </div>
             </div>
-            
+
             {/* Actions */}
             <div className="flex gap-3">
               <button
@@ -296,7 +295,7 @@ export default function DocumentUpload({ onComplete, onCancel }: DocumentUploadP
             </div>
           </motion.div>
         )}
-        
+
         {/* Step 3: Processing */}
         {step === 'processing' && (
           <motion.div
@@ -317,34 +316,31 @@ export default function DocumentUpload({ onComplete, onCancel }: DocumentUploadP
                 <span className="text-4xl">{processingSteps[processingStep].icon}</span>
               </div>
             </div>
-            
+
             {/* Current step */}
             <p className="text-xl font-medium text-midnight-800 mb-4">
               {processingSteps[processingStep].label}
             </p>
-            
+
             {/* Progress dots */}
             <div className="flex justify-center gap-2">
               {processingSteps.map((_, idx) => (
                 <div
                   key={idx}
-                  className={`w-2 h-2 rounded-full transition-all duration-300 ${
-                    idx <= processingStep ? 'bg-sage-500' : 'bg-sage-200'
-                  }`}
+                  className={`w-2 h-2 rounded-full transition-all duration-300 ${idx <= processingStep ? 'bg-sage-500' : 'bg-sage-200'
+                    }`}
                 />
               ))}
             </div>
-            
+
             {/* Powered by badge */}
-            <div className={`mt-8 inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm ${
-              isRealAPI ? 'bg-sage-100 text-sage-700' : 'bg-cream-100 text-midnight-600'
-            }`}>
-              <Sparkles className={`w-4 h-4 ${isRealAPI ? 'text-sage-600' : 'text-midnight-400'}`} />
-              {isRealAPI ? 'Powered by MedGemma API' : 'Demo Mode'}
+            <div className="mt-8 inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm bg-sage-100 text-sage-700">
+              <Sparkles className="w-4 h-4 text-sage-600" />
+              Powered by MedGemma API
             </div>
           </motion.div>
         )}
-        
+
         {/* Step 4: Complete */}
         {step === 'complete' && processedDocument && (
           <motion.div
@@ -367,7 +363,7 @@ export default function DocumentUpload({ onComplete, onCancel }: DocumentUploadP
                 Document Analyzed Successfully
               </h3>
             </div>
-            
+
             {/* Quick summary */}
             <div className="card mb-6">
               <div className="flex items-start gap-4">
@@ -389,7 +385,7 @@ export default function DocumentUpload({ onComplete, onCancel }: DocumentUploadP
                 </div>
               </div>
             </div>
-            
+
             {/* Action */}
             <button
               onClick={() => onComplete(processedDocument)}
