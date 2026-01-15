@@ -2,13 +2,14 @@
 
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
-import type { 
-  MedicalDocument, 
-  HealthAlert, 
-  LabTrend, 
+import { createIndexedDBStorage } from './indexedDBStorage';
+import type {
+  MedicalDocument,
+  HealthAlert,
+  LabTrend,
   TimelineEvent,
   LabResult,
-  LabCategory 
+  LabCategory
 } from '@/types/medical';
 
 interface MedLensState {
@@ -17,7 +18,7 @@ interface MedLensState {
   alerts: HealthAlert[];
   isProcessing: boolean;
   processingProgress: number;
-  
+
   // Actions
   addDocument: (doc: MedicalDocument) => void;
   updateDocument: (id: string, updates: Partial<MedicalDocument>) => void;
@@ -27,7 +28,7 @@ interface MedLensState {
   dismissAlert: (id: string) => void;
   setProcessing: (status: boolean) => void;
   setProcessingProgress: (progress: number) => void;
-  
+
   // Computed getters
   getLabTrends: () => LabTrend[];
   getTimeline: () => TimelineEvent[];
@@ -43,45 +44,45 @@ export const useMedLensStore = create<MedLensState>()(
       alerts: [],
       isProcessing: false,
       processingProgress: 0,
-      
+
       // Actions
       addDocument: (doc) => set((state) => ({
         documents: [doc, ...state.documents],
       })),
-      
+
       updateDocument: (id, updates) => set((state) => ({
         documents: state.documents.map((doc) =>
           doc.id === id ? { ...doc, ...updates, updatedAt: new Date().toISOString() } : doc
         ),
       })),
-      
+
       removeDocument: (id) => set((state) => ({
         documents: state.documents.filter((doc) => doc.id !== id),
       })),
-      
+
       addAlert: (alert) => set((state) => ({
         alerts: [alert, ...state.alerts],
       })),
-      
+
       addAlerts: (alerts) => set((state) => ({
         alerts: [...alerts, ...state.alerts],
       })),
-      
+
       dismissAlert: (id) => set((state) => ({
         alerts: state.alerts.map((alert) =>
           alert.id === id ? { ...alert, dismissed: true } : alert
         ),
       })),
-      
+
       setProcessing: (status) => set({ isProcessing: status }),
-      
+
       setProcessingProgress: (progress) => set({ processingProgress: progress }),
-      
+
       // Computed getters
       getLabTrends: () => {
         const { documents } = get();
         const labResultsByTest: Map<string, { result: LabResult; date: string }[]> = new Map();
-        
+
         // Collect all lab results grouped by test name
         documents.forEach((doc) => {
           const labResults = doc.extractedData.structuredData.labResults || [];
@@ -92,15 +93,15 @@ export const useMedLensStore = create<MedLensState>()(
             labResultsByTest.set(key, existing);
           });
         });
-        
+
         // Build trends for tests with multiple data points
         const trends: LabTrend[] = [];
-        
+
         labResultsByTest.forEach((results, testName) => {
           if (results.length >= 1) {
             // Sort by date
             results.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-            
+
             const firstResult = results[0].result;
             const dataPoints = results
               .map(({ result, date }) => ({
@@ -109,7 +110,7 @@ export const useMedLensStore = create<MedLensState>()(
                 status: result.status,
               }))
               .filter((dp) => !isNaN(dp.value));
-            
+
             if (dataPoints.length > 0) {
               // Determine trend direction
               let currentStatus: LabTrend['currentStatus'] = 'unknown';
@@ -118,7 +119,7 @@ export const useMedLensStore = create<MedLensState>()(
                 const previous = dataPoints[dataPoints.length - 2];
                 const diff = recent.value - previous.value;
                 const threshold = Math.abs(previous.value * 0.05); // 5% change threshold
-                
+
                 if (Math.abs(diff) <= threshold) {
                   currentStatus = 'stable';
                 } else if (recent.status === 'normal' && previous.status !== 'normal') {
@@ -133,7 +134,7 @@ export const useMedLensStore = create<MedLensState>()(
                   currentStatus = 'stable';
                 }
               }
-              
+
               trends.push({
                 testName: firstResult.testName,
                 category: firstResult.category,
@@ -148,21 +149,21 @@ export const useMedLensStore = create<MedLensState>()(
             }
           }
         });
-        
+
         return trends;
       },
-      
+
       getTimeline: () => {
         const { documents } = get();
-        
+
         return documents
           .map((doc) => {
             const labResults = doc.extractedData.structuredData.labResults || [];
             const abnormalCount = labResults.filter((r) => r.status !== 'normal').length;
-            
+
             let summary = '';
             let highlights: string[] = [];
-            
+
             switch (doc.type) {
               case 'lab_report':
                 summary = `${labResults.length} tests performed`;
@@ -186,7 +187,7 @@ export const useMedLensStore = create<MedLensState>()(
               default:
                 summary = doc.title;
             }
-            
+
             return {
               id: doc.id,
               documentId: doc.id,
@@ -199,12 +200,12 @@ export const useMedLensStore = create<MedLensState>()(
           })
           .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
       },
-      
+
       getAlertCount: () => {
         const { alerts } = get();
         return alerts.filter((a) => !a.dismissed).length;
       },
-      
+
       getDocumentsByType: (type) => {
         const { documents } = get();
         return documents.filter((doc) => doc.type === type);
@@ -212,7 +213,7 @@ export const useMedLensStore = create<MedLensState>()(
     }),
     {
       name: 'medlens-storage',
-      storage: createJSONStorage(() => localStorage),
+      storage: createJSONStorage(() => createIndexedDBStorage()),
       partialize: (state) => ({
         documents: state.documents,
         alerts: state.alerts,

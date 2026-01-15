@@ -36,17 +36,18 @@ export default function RootLayout({
       <head>
         <link rel="apple-touch-icon" href="/icons/icon-192x192.png" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
       </head>
       <body className="min-h-screen antialiased">
         <div className="relative min-h-screen">
           {/* Subtle background pattern */}
           <div className="fixed inset-0 -z-10 texture-noise" />
-          
+
           {/* Main content */}
           {children}
         </div>
-        
+
         {/* Service Worker Registration */}
         <script
           dangerouslySetInnerHTML={{
