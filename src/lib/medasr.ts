@@ -30,13 +30,13 @@ export class AudioRecorder {
 
   async startRecording(): Promise<void> {
     try {
-      this.stream = await navigator.mediaDevices.getUserMedia({ 
+      this.stream = await navigator.mediaDevices.getUserMedia({
         audio: {
           echoCancellation: true,
           noiseSuppression: true,
           autoGainControl: true,
           sampleRate: 16000, // MedASR prefers 16kHz
-        } 
+        }
       });
 
       this.mediaRecorder = new MediaRecorder(this.stream, {
@@ -91,8 +91,8 @@ export class AudioRecorder {
       }
 
       this.mediaRecorder.onstop = () => {
-        const audioBlob = new Blob(this.audioChunks, { 
-          type: this.getSupportedMimeType() 
+        const audioBlob = new Blob(this.audioChunks, {
+          type: this.getSupportedMimeType()
         });
         this.cleanup();
         resolve(audioBlob);
@@ -180,11 +180,11 @@ export async function audioToBase64(blob: Blob): Promise<string> {
 // Transcribe audio using MedASR or fallback
 export async function transcribeAudio(audioBlob: Blob): Promise<string> {
   const useRealAPI = process.env.NEXT_PUBLIC_USE_REAL_API === 'true';
-  const hasApiKey = process.env.NEXT_PUBLIC_GOOGLE_API_KEY && 
-                    process.env.NEXT_PUBLIC_GOOGLE_API_KEY !== 'YOUR_API_KEY_HERE';
-  
+  const hasApiKey = process.env.NEXT_PUBLIC_GOOGLE_API_KEY &&
+    process.env.NEXT_PUBLIC_GOOGLE_API_KEY !== 'YOUR_API_KEY_HERE';
+
   console.log('[MedASR] Config:', { useRealAPI, hasApiKey, blobSize: audioBlob.size });
-  
+
   if (useRealAPI && hasApiKey) {
     try {
       console.log('[MedASR] Using REAL Speech-to-Text API...');
@@ -197,7 +197,7 @@ export async function transcribeAudio(audioBlob: Blob): Promise<string> {
       console.error('[MedASR] Real API failed:', error);
     }
   }
-  
+
   console.log('[MedASR] Using simulated transcription');
   return simulateTranscription();
 }
@@ -205,21 +205,21 @@ export async function transcribeAudio(audioBlob: Blob): Promise<string> {
 // Real Google Speech-to-Text API call
 async function transcribeWithGoogleSpeech(audioBlob: Blob): Promise<string> {
   const API_KEY = process.env.NEXT_PUBLIC_GOOGLE_API_KEY;
-  
+
   if (!API_KEY) {
     throw new Error('Google API key not configured');
   }
 
   const base64Audio = await audioToBase64(audioBlob);
-  
+
   // Detect audio encoding from blob type
   let encoding = 'WEBM_OPUS';
   if (audioBlob.type.includes('mp4')) encoding = 'MP3';
   else if (audioBlob.type.includes('wav')) encoding = 'LINEAR16';
   else if (audioBlob.type.includes('ogg')) encoding = 'OGG_OPUS';
-  
+
   console.log('[MedASR] Audio encoding:', encoding, 'Size:', audioBlob.size);
-  
+
   const response = await fetch(
     `https://speech.googleapis.com/v1/speech:recognize?key=${API_KEY}`,
     {
@@ -263,14 +263,14 @@ async function transcribeWithGoogleSpeech(audioBlob: Blob): Promise<string> {
 
   const result = await response.json();
   console.log('[MedASR] API response:', JSON.stringify(result).slice(0, 200));
-  
+
   if (result.results && result.results.length > 0) {
     return result.results
       .map((r: any) => r.alternatives?.[0]?.transcript || '')
       .join(' ')
       .trim();
   }
-  
+
   return '';
 }
 
@@ -283,14 +283,14 @@ function simulateTranscription(): string {
     "Discussed results from last week's lab work. A1C is improving with lifestyle changes.",
     "Reminder to schedule follow-up appointment for next month. Need to get blood work done before the visit.",
   ];
-  
+
   return demoTranscriptions[Math.floor(Math.random() * demoTranscriptions.length)];
 }
 
 // Create a voice note object
 export function createVoiceNote(
-  transcript: string, 
-  duration: number, 
+  transcript: string,
+  duration: number,
   audioUrl?: string
 ): VoiceNote {
   return {
@@ -311,11 +311,10 @@ export function formatDuration(seconds: number): string {
 
 // Check if audio recording is supported
 export function isRecordingSupported(): boolean {
-  return !!(
-    navigator.mediaDevices &&
-    navigator.mediaDevices.getUserMedia &&
-    window.MediaRecorder
-  );
+  return typeof window !== 'undefined' &&
+    typeof navigator !== 'undefined' &&
+    !!navigator.mediaDevices &&
+    typeof window.MediaRecorder !== 'undefined';
 }
 
 // Audio visualization helper
@@ -327,12 +326,12 @@ export function createAudioAnalyzer(stream: MediaStream): {
   const audioContext = new AudioContext();
   const analyzer = audioContext.createAnalyser();
   const source = audioContext.createMediaStreamSource(stream);
-  
+
   analyzer.fftSize = 256;
   source.connect(analyzer);
-  
+
   const dataArray = new Uint8Array(analyzer.frequencyBinCount);
-  
+
   return {
     analyzer,
     getVolume: () => {
