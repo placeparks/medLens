@@ -46,20 +46,20 @@ interface DocumentDetailProps {
 
 export default function DocumentDetail({ document, onBack }: DocumentDetailProps) {
   const [expandedCategories, setExpandedCategories] = useState<Set<LabCategory>>(
-    new Set(['metabolic', 'lipid'])
+    new Set<LabCategory>(['metabolic', 'lipid'])
   );
   const [showExplanation, setShowExplanation] = useState(true);
   const [showVoiceRecorder, setShowVoiceRecorder] = useState(false);
   const [showExportPanel, setShowExportPanel] = useState(false);
   const [playingNoteId, setPlayingNoteId] = useState<string | null>(null);
-  
+
   const { documents, updateDocument, getLabTrends } = useMedLensStore();
   const labTrends = getLabTrends();
-  
+
   const labResults = document.extractedData.structuredData.labResults || [];
   const medications = document.extractedData.structuredData.medications || [];
   const recommendations = document.extractedData.structuredData.recommendations || [];
-  
+
   // Group lab results by category
   const labsByCategory = labResults.reduce((acc, result) => {
     if (!acc[result.category]) {
@@ -68,7 +68,7 @@ export default function DocumentDetail({ document, onBack }: DocumentDetailProps
     acc[result.category].push(result);
     return acc;
   }, {} as Record<LabCategory, LabResult[]>);
-  
+
   const toggleCategory = (category: LabCategory) => {
     const newExpanded = new Set(expandedCategories);
     if (newExpanded.has(category)) {
@@ -78,7 +78,7 @@ export default function DocumentDetail({ document, onBack }: DocumentDetailProps
     }
     setExpandedCategories(newExpanded);
   };
-  
+
   const getStatusIcon = (status: LabResult['status']) => {
     switch (status) {
       case 'normal': return <CheckCircle className="w-4 h-4 text-sage-500" />;
@@ -88,7 +88,7 @@ export default function DocumentDetail({ document, onBack }: DocumentDetailProps
       default: return <Info className="w-4 h-4 text-midnight-400" />;
     }
   };
-  
+
   const getStatusBadge = (status: LabResult['status']) => {
     switch (status) {
       case 'normal': return 'badge-normal';
@@ -98,7 +98,7 @@ export default function DocumentDetail({ document, onBack }: DocumentDetailProps
       default: return 'badge';
     }
   };
-  
+
   const getTrendForTest = (testName: string) => {
     return labTrends.find(t => t.testName.toLowerCase() === testName.toLowerCase());
   };
@@ -149,17 +149,17 @@ export default function DocumentDetail({ document, onBack }: DocumentDetailProps
             )}
           </div>
         </div>
-        
+
         {/* Actions */}
         <div className="flex items-center gap-2">
-          <button 
+          <button
             onClick={() => setShowExportPanel(true)}
             className="btn-ghost p-2"
             title="Export / Share"
           >
             <Share2 className="w-5 h-5" />
           </button>
-          <button 
+          <button
             onClick={() => setShowExportPanel(true)}
             className="btn-ghost p-2"
             title="Download"
@@ -168,7 +168,7 @@ export default function DocumentDetail({ document, onBack }: DocumentDetailProps
           </button>
         </div>
       </div>
-      
+
       <div className="grid lg:grid-cols-3 gap-6">
         {/* Main Content */}
         <div className="lg:col-span-2 space-y-6">
@@ -198,7 +198,7 @@ export default function DocumentDetail({ document, onBack }: DocumentDetailProps
                   <ChevronDown className="w-5 h-5 text-midnight-400" />
                 )}
               </button>
-              
+
               <AnimatePresence>
                 {showExplanation && (
                   <motion.div
@@ -215,17 +215,17 @@ export default function DocumentDetail({ document, onBack }: DocumentDetailProps
               </AnimatePresence>
             </motion.div>
           )}
-          
+
           {/* Lab Results by Category */}
           {Object.entries(labsByCategory).length > 0 && (
             <div className="space-y-4">
               <h3 className="text-lg font-display font-semibold text-midnight-900">Lab Results</h3>
-              
+
               {Object.entries(labsByCategory).map(([category, results], idx) => {
                 const categoryInfo = LAB_CATEGORY_INFO[category as LabCategory];
                 const isExpanded = expandedCategories.has(category as LabCategory);
                 const abnormalCount = results.filter(r => r.status !== 'normal').length;
-                
+
                 return (
                   <motion.div
                     key={category}
@@ -258,7 +258,7 @@ export default function DocumentDetail({ document, onBack }: DocumentDetailProps
                         <ChevronDown className="w-5 h-5 text-midnight-400" />
                       )}
                     </button>
-                    
+
                     <AnimatePresence>
                       {isExpanded && (
                         <motion.div
@@ -269,15 +269,14 @@ export default function DocumentDetail({ document, onBack }: DocumentDetailProps
                         >
                           {results.map((result) => {
                             const trend = getTrendForTest(result.testName);
-                            
+
                             return (
                               <div
                                 key={result.id}
-                                className={`p-4 rounded-xl border ${
-                                  result.status === 'normal' ? 'border-cream-200 bg-cream-50/50' :
-                                  result.status === 'critical' ? 'border-coral-200 bg-coral-50/50' :
-                                  'border-amber-200 bg-amber-50/50'
-                                }`}
+                                className={`p-4 rounded-xl border ${result.status === 'normal' ? 'border-cream-200 bg-cream-50/50' :
+                                    result.status === 'critical' ? 'border-coral-200 bg-coral-50/50' :
+                                      'border-amber-200 bg-amber-50/50'
+                                  }`}
                               >
                                 <div className="flex items-start justify-between">
                                   <div className="flex-1">
@@ -287,26 +286,26 @@ export default function DocumentDetail({ document, onBack }: DocumentDetailProps
                                         {result.testName}
                                       </span>
                                     </div>
-                                    
+
                                     <div className="mt-2 flex items-baseline gap-2">
                                       <span className="text-2xl font-display font-semibold text-midnight-900">
                                         {result.value}
                                       </span>
                                       <span className="text-sm text-midnight-500">{result.unit}</span>
                                     </div>
-                                    
+
                                     {result.referenceRange && (
                                       <p className="text-sm text-midnight-500 mt-1">
                                         Reference: {result.referenceRange.text || `${result.referenceRange.low} - ${result.referenceRange.high}`}
                                       </p>
                                     )}
                                   </div>
-                                  
+
                                   <span className={getStatusBadge(result.status)}>
                                     {result.status}
                                   </span>
                                 </div>
-                                
+
                                 {/* Mini trend chart */}
                                 {trend && trend.dataPoints.length > 1 && (
                                   <div className="mt-4 pt-4 border-t border-cream-200">
@@ -348,7 +347,7 @@ export default function DocumentDetail({ document, onBack }: DocumentDetailProps
               })}
             </div>
           )}
-          
+
           {/* Medications */}
           {medications.length > 0 && (
             <div className="card">
@@ -371,7 +370,7 @@ export default function DocumentDetail({ document, onBack }: DocumentDetailProps
             </div>
           )}
         </div>
-        
+
         {/* Sidebar */}
         <div className="space-y-6">
           {/* Quick Stats */}
@@ -402,7 +401,7 @@ export default function DocumentDetail({ document, onBack }: DocumentDetailProps
               </div>
             </div>
           </div>
-          
+
           {/* Recommendations */}
           {recommendations.length > 0 && (
             <div className="card">
@@ -417,12 +416,12 @@ export default function DocumentDetail({ document, onBack }: DocumentDetailProps
               </ul>
             </div>
           )}
-          
+
           {/* Voice Notes */}
           <div className="card">
             <div className="flex items-center justify-between mb-4">
               <h3 className="font-medium text-midnight-900">Voice Notes</h3>
-              <button 
+              <button
                 onClick={() => setShowVoiceRecorder(true)}
                 className="btn-ghost p-2"
                 title="Add voice note"
@@ -430,7 +429,7 @@ export default function DocumentDetail({ document, onBack }: DocumentDetailProps
                 <Plus className="w-4 h-4" />
               </button>
             </div>
-            
+
             {document.voiceNotes.length === 0 ? (
               <button
                 onClick={() => setShowVoiceRecorder(true)}
@@ -478,7 +477,7 @@ export default function DocumentDetail({ document, onBack }: DocumentDetailProps
                     </div>
                   </div>
                 ))}
-                
+
                 <button
                   onClick={() => setShowVoiceRecorder(true)}
                   className="w-full p-2 rounded-lg text-sm text-sage-600 hover:bg-sage-50 flex items-center justify-center gap-2"
@@ -489,7 +488,7 @@ export default function DocumentDetail({ document, onBack }: DocumentDetailProps
               </div>
             )}
           </div>
-          
+
           {/* Original Document */}
           {document.originalImage && (
             <div className="card">
@@ -505,7 +504,7 @@ export default function DocumentDetail({ document, onBack }: DocumentDetailProps
           )}
         </div>
       </div>
-      
+
       {/* Voice Recorder Modal */}
       <AnimatePresence>
         {showVoiceRecorder && (
@@ -532,7 +531,7 @@ export default function DocumentDetail({ document, onBack }: DocumentDetailProps
           </motion.div>
         )}
       </AnimatePresence>
-      
+
       {/* Export Panel */}
       <AnimatePresence>
         {showExportPanel && (
